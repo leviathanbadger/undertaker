@@ -6,6 +6,15 @@ namespace Undertaker.Extensions
 {
     public static class JobSchedulerExtensions
     {
+        public static IJobBuilder After(this IJobScheduler scheduler, IJob job)
+        {
+            return scheduler.BuildJob().After(job);
+        }
+        public static IJobBuilder After(this IJobScheduler scheduler, DateTime dateTime, DateTimeKind kind = DateTimeKind.Local)
+        {
+            return scheduler.BuildJob().After(dateTime, kind);
+        }
+
         public static IJob Run<T>(this IJobScheduler scheduler, Expression<Action<T>> job)
         {
             return scheduler.BuildJob().Run(job);
