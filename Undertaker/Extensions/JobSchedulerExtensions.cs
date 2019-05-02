@@ -8,14 +8,14 @@ namespace Undertaker.Extensions
     public static class JobSchedulerExtensions
     {
         [MustUseReturnValue]
+        public static IJobBuilder After(this IJobScheduler scheduler, DateTime dateTime)
+        {
+            return scheduler.BuildJob().After(dateTime);
+        }
+        [MustUseReturnValue]
         public static IJobBuilder After(this IJobScheduler scheduler, IJob job)
         {
             return scheduler.BuildJob().After(job);
-        }
-        [MustUseReturnValue]
-        public static IJobBuilder After(this IJobScheduler scheduler, DateTime dateTime, DateTimeKind kind = DateTimeKind.Local)
-        {
-            return scheduler.BuildJob().After(dateTime, kind);
         }
 
         public static IJob Run<T>(this IJobScheduler scheduler, Expression<Action<T>> job)

@@ -6,5 +6,7 @@ namespace Undertaker
     {
         [MustUseReturnValue]
         IJobBuilder BuildJob();
+
+        IJob ScheduleJob(JobDefinition jobDefinition);
     }
 }

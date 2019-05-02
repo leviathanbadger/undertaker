@@ -8,9 +8,9 @@ namespace Undertaker
     public interface IJobBuilder
     {
         [MustUseReturnValue]
-        IJobBuilder After(IJob job);
+        IJobBuilder After(DateTime dateTime);
         [MustUseReturnValue]
-        IJobBuilder After(DateTime dateTime, DateTimeKind kind = DateTimeKind.Local);
+        IJobBuilder After(IJob job);
 
         IJob Run<T>(Expression<Action<T>> job);
         IJob Run<T>(Expression<Func<T, Task>> job);
