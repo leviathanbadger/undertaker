@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28809.33
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undertaker", "Undertaker\Undertaker.csproj", "{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {02F3E908-670A-4683-B643-41B5122C21D0}
+	EndGlobalSection
+EndGlobal
