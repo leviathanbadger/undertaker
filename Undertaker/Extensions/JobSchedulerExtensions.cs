@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using System;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
@@ -6,10 +7,12 @@ namespace Undertaker.Extensions
 {
     public static class JobSchedulerExtensions
     {
+        [MustUseReturnValue]
         public static IJobBuilder After(this IJobScheduler scheduler, IJob job)
         {
             return scheduler.BuildJob().After(job);
         }
+        [MustUseReturnValue]
         public static IJobBuilder After(this IJobScheduler scheduler, DateTime dateTime, DateTimeKind kind = DateTimeKind.Local)
         {
             return scheduler.BuildJob().After(dateTime, kind);
