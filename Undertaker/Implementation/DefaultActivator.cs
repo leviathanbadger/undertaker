@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Threading;
 
-namespace Undertaker.Implementation
+namespace Undertaker
 {
     public class DefaultActivator : IActivator
     {
