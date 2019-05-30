@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Undertaker
 {
@@ -20,9 +21,9 @@ namespace Undertaker
             FullyQualifiedTypeName = fullyQualifiedTypeName;
             MethodName = methodName;
             IsMethodStatic = isStatic;
-            Parameters = Array.AsReadOnly(parameters ?? new ParameterDefinition[0]);
+            Parameters = Array.AsReadOnly(parameters?.ToArray() ?? new ParameterDefinition[0]);
             RunAtTime = runAt;
-            RunAfterJobs = Array.AsReadOnly(runAfter ?? new IJob[0]);
+            RunAfterJobs = Array.AsReadOnly(runAfter?.ToArray() ?? new IJob[0]);
         }
 
         public string Name { get; }

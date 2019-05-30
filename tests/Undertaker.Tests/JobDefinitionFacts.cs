@@ -1,7 +1,8 @@
 using FluentAssertions;
+using JetBrains.Annotations;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using JetBrains.Annotations;
+using System.Linq;
 using Xunit;
 
 namespace Undertaker
@@ -44,6 +45,47 @@ namespace Undertaker
             result.Parameters.Should().BeEquivalentTo(parameters);
             result.RunAtTime.Should().Be(runAt);
             result.RunAfterJobs.Should().BeEquivalentTo(runAfter);
+        }
+
+        [Fact]
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion")]
+        public void Ctor_WhenOriginalParameterArrayIsModified_ShouldNotReflectArrayChange()
+        {
+            //Arrange
+            var runAfter = new IJob[]
+            {
+                new JobMock("job1"),
+                new JobMock("job2"),
+                new JobMock("job3")
+            };
+
+            //Act
+            var result = new JobDefinition("fish", "fishy", "Undertaker.Fish; some assembly required", "Swim", true, new ParameterDefinition[0], DateTime.UtcNow.AddHours(2), runAfter);
+            runAfter[1] = new JobMock("job4");
+
+            //Assert
+            var job = (JobMock)result.RunAfterJobs.ElementAt(1);
+            job.Discriminator.Should().Be("job2");
+        }
+
+        [Fact]
+        [SuppressMessage("ReSharper", "CoVariantArrayConversion")]
+        public void Ctor_WhenOriginalRunAfterArrayIsModified_ShouldNotReflectArrayChange()
+        {
+            //Arrange
+            var parameters = new[]
+            {
+                new ParameterDefinition("type1", "25"),
+                new ParameterDefinition("type2", "'c'"),
+                new ParameterDefinition("type3", "\"str\"")
+            };
+
+            //Act
+            var result = new JobDefinition("fish", "fishy", "Undertaker.Fish; some assembly required", "Swim", true, parameters, DateTime.UtcNow.AddHours(2), new IJob[0]);
+            parameters[1] = new ParameterDefinition("type4", "[]");
+
+            //Assert
+            result.Parameters.ElementAt(1).FullyQualifiedTypeName.Should().Be("type2");
         }
 
         private class JobMock : IJob
