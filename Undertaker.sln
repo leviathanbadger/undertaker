@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28809.33
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undertaker", "Undertaker\Undertaker.csproj", "{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Undertaker", "src\Undertaker\Undertaker.csproj", "{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E10C47D9-C336-4A0E-97AF-C5574483516A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,6 +20,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7371DA4B-4EE3-4B8F-8710-7D9D4F5A897B} = {E10C47D9-C336-4A0E-97AF-C5574483516A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {02F3E908-670A-4683-B643-41B5122C21D0}
