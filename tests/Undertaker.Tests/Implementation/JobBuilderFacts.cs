@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using NSubstitute;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Undertaker
@@ -95,11 +96,155 @@ namespace Undertaker
             jobDefinition.RunAfterJobs.Should().BeEquivalentTo(afterJobs);
         }
 
+        [Fact]
+        public void Run_WithStaticExpression_ShouldWork()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            JobDefinition jobDefinition = null;
+            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            builder.Run(() => TestJob.RunStatic());
+
+            //Assert
+            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            jobDefinition.Should().NotBeNull();
+            jobDefinition.IsMethodStatic.Should().BeTrue();
+            jobDefinition.MethodName.Should().Be(nameof(TestJob.RunStatic));
+            jobDefinition.FullyQualifiedTypeName.Should().Be(typeof(TestJob).AssemblyQualifiedName);
+        }
+
+        [Fact]
+        public void Run_WithMemberExpression_ShouldWork()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            JobDefinition jobDefinition = null;
+            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            builder.Run<TestJob>(job => job.Run());
+
+            //Assert
+            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            jobDefinition.Should().NotBeNull();
+            jobDefinition.IsMethodStatic.Should().BeFalse();
+            jobDefinition.MethodName.Should().Be(nameof(TestJob.Run));
+            jobDefinition.FullyQualifiedTypeName.Should().Be(typeof(TestJob).AssemblyQualifiedName);
+        }
+
+        [Fact]
+        public void Run_WithStaticAsyncExpression_ShouldWork()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            JobDefinition jobDefinition = null;
+            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            builder.Run(() => TestJob.RunStaticAsync());
+
+            //Assert
+            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            jobDefinition.Should().NotBeNull();
+            jobDefinition.IsMethodStatic.Should().BeTrue();
+            jobDefinition.MethodName.Should().Be(nameof(TestJob.RunStaticAsync));
+            jobDefinition.FullyQualifiedTypeName.Should().Be(typeof(TestJob).AssemblyQualifiedName);
+        }
+
+        [Fact]
+        public void Run_WithMemberAsyncExpression_ShouldWork()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            JobDefinition jobDefinition = null;
+            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            builder.Run<TestJob>(job => job.RunAsync());
+
+            //Assert
+            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            jobDefinition.Should().NotBeNull();
+            jobDefinition.IsMethodStatic.Should().BeFalse();
+            jobDefinition.MethodName.Should().Be(nameof(TestJob.RunAsync));
+            jobDefinition.FullyQualifiedTypeName.Should().Be(typeof(TestJob).AssemblyQualifiedName);
+        }
+
+        [Fact]
+        public void Run_WithNonMethodCallExpression_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            Action act = () => builder.Run<TestJob>(job => Task.CompletedTask);
+
+            //Assert
+            act.Should()
+               .Throw<ArgumentException>()
+               .WithMessage("*must be a method call expression*");
+        }
+
+        [Fact]
+        public void Run_WhenMemberMethodObjectIsNotParameter_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+            var otherJob = new TestJob();
+
+            //Act
+            Action act = () => builder.Run<TestJob>(job => otherJob.Run());
+
+            //Assert
+            act.Should()
+               .Throw<ArgumentException>()
+               .WithMessage("An activation class was selected, but was not used as the left-hand side of the method call expression.");
+        }
+
+        [Fact]
+        public void Run_WithoutParameter_WhenExpressionHasMethodObject_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+            var otherJob = new TestJob();
+
+            //Act
+            Action act = () => builder.Run(() => otherJob.Run());
+
+            //Assert
+            act.Should()
+               .Throw<ArgumentException>()
+               .WithMessage("No activation class selected, so the method call must be static.*");
+        }
+
         [UsedImplicitly]
         private class TestJob
         {
+            public static void RunStatic()
+            {
+            }
+
+            public static Task RunStaticAsync()
+            {
+                return Task.CompletedTask;
+            }
+
             public void Run()
             {
+            }
+
+            public Task RunAsync()
+            {
+                return Task.CompletedTask;
             }
         }
     }
