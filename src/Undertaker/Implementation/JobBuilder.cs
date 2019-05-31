@@ -18,8 +18,25 @@ namespace Undertaker
             _runAfter = new List<IJob>();
         }
 
+        private string _name;
+        private string _desc;
         private DateTime? _runAt;
         private readonly List<IJob> _runAfter;
+
+        public IJobBuilder WithName(string name)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
+            if (_name != null) throw new InvalidOperationException("This job has already been given a name.");
+            _name = name;
+            return this;
+        }
+        public IJobBuilder WithDescription(string desc)
+        {
+            if (desc == null) throw new ArgumentNullException(nameof(desc));
+            if (_desc != null) throw new InvalidOperationException("This job has already been given a description.");
+            _desc = desc;
+            return this;
+        }
 
         public IJobBuilder After(DateTime dateTime)
         {
@@ -56,8 +73,8 @@ namespace Undertaker
             ValidateExpression(job, out var fullyQualifiedTypeName, out var methodName, out var isStatic, out var parameters);
 
             var jobDefinition = new JobDefinition(
-                name: methodName,
-                desc: null,
+                name: _name ?? methodName,
+                desc: _desc,
                 fullyQualifiedTypeName: fullyQualifiedTypeName,
                 methodName: methodName,
                 isStatic: isStatic,

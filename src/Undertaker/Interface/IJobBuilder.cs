@@ -8,6 +8,11 @@ namespace Undertaker
     public interface IJobBuilder
     {
         [MustUseReturnValue]
+        IJobBuilder WithName([NotNull] string name);
+        [MustUseReturnValue]
+        IJobBuilder WithDescription([NotNull] string name);
+
+        [MustUseReturnValue]
         IJobBuilder After(DateTime dateTime);
         [MustUseReturnValue]
         IJobBuilder After(IJob job);

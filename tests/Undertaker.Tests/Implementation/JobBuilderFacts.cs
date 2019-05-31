@@ -2,6 +2,7 @@ using FluentAssertions;
 using JetBrains.Annotations;
 using NSubstitute;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -10,6 +11,112 @@ namespace Undertaker
 {
     public class JobBuilderFacts
     {
+        [Fact]
+        [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute")]
+        public void WithName_WhenNameIsNull_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            Action act = () => builder.WithName(null);
+
+            //Assert
+            act.Should()
+               .Throw<ArgumentNullException>();
+        }
+
+        [Fact]
+        public void WithName_WhenNameHasNotBeenSelected_ShouldSetJobName()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            JobDefinition jobDefinition = null;
+            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            var name = "turkey";
+
+            //Act
+            builder.WithName(name).Run<TestJob>(job => job.Run());
+
+            //Assert
+            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            jobDefinition.Should().NotBeNull();
+            jobDefinition.Name.Should().Be(name);
+            jobDefinition.Description.Should().BeNull();
+        }
+
+        [Fact]
+        public void WithName_WhenNameHasBeenSelected_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = new JobBuilder(scheduler).WithName("horse");
+
+            //Act
+            Action act = () => builder.WithName("fish");
+
+            //Assert
+            act.Should()
+               .Throw<InvalidOperationException>()
+               .WithMessage("*already * given a name*");
+        }
+
+        [Fact]
+        [SuppressMessage("ReSharper", "AssignNullToNotNullAttribute")]
+        public void WithDescription_WhenDescriptionIsNull_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            Action act = () => builder.WithDescription(null);
+
+            //Assert
+            act.Should()
+               .Throw<ArgumentNullException>();
+        }
+
+        [Fact]
+        public void WithDescription_WhenDescriptionHasNotBeenSelected_ShouldSetJobDescription()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            JobDefinition jobDefinition = null;
+            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            var desc = "turkey";
+
+            //Act
+            builder.WithDescription(desc).Run<TestJob>(job => job.Run());
+
+            //Assert
+            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            jobDefinition.Should().NotBeNull();
+            jobDefinition.Name.Should().Be(nameof(TestJob.Run));
+            jobDefinition.Description.Should().Be(desc);
+        }
+
+        [Fact]
+        public void WithDescription_WhenDescriptionHasBeenSelected_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = new JobBuilder(scheduler).WithDescription("horse");
+
+            //Act
+            Action act = () => builder.WithDescription("fish");
+
+            //Assert
+            act.Should()
+               .Throw<InvalidOperationException>()
+               .WithMessage("*already * given a description*");
+        }
+
         [Fact]
         public void AfterDateTime_WhenRunAtHasNotBeenSelected_ShouldSetRunAtTime()
         {
@@ -54,7 +161,7 @@ namespace Undertaker
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
             scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
-            var builder = new JobBuilder(scheduler);
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             var afterJob = Substitute.For<IJob>();
 
