@@ -210,6 +210,22 @@ namespace Undertaker
         }
 
         [Fact]
+        public void Run_WhenMemberMethodObjectIsNotAnObject_ShouldFailFast()
+        {
+            //Arrange
+            var scheduler = Substitute.For<IJobScheduler>();
+            var builder = (IJobBuilder)new JobBuilder(scheduler);
+
+            //Act
+            Action act = () => builder.Run<TestJob>(job => job.Self.Run());
+
+            //Assert
+            act.Should()
+               .Throw<ArgumentException>()
+               .WithMessage("An activation class was selected, but was not used as the left-hand side of the method call expression.");
+        }
+
+        [Fact]
         public void Run_WithoutParameter_WhenExpressionHasMethodObject_ShouldFailFast()
         {
             //Arrange
@@ -245,6 +261,14 @@ namespace Undertaker
             public Task RunAsync()
             {
                 return Task.CompletedTask;
+            }
+
+            public TestJob Self
+            {
+                get
+                {
+                    return this;
+                }
             }
         }
     }
