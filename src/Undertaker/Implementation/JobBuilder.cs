@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -84,7 +85,7 @@ namespace Undertaker
             }
 
             var declaringType = expr.Method.DeclaringType;
-            if (declaringType == null) throw new ArgumentException("The method in the method call expression must have a declaring type."); //Is this even possible? ReSharper seems to think so...
+            Debug.Assert(declaringType != null, $"{nameof(declaringType)} != null");
 
             fullyQualifiedTypeName = declaringType.AssemblyQualifiedName;
             methodName = expr.Method.Name;
