@@ -204,7 +204,7 @@ namespace Undertaker
                 _runAtTime = _jobDefinition.RunAtTime ?? DateTime.UtcNow;
             }
 
-            public InMemoryJobStorage Storage
+            public IJobStorage Storage
             {
                 get
                 {
@@ -261,6 +261,26 @@ namespace Undertaker
                 {
                     _runAtTime = value;
                 }
+            }
+
+            public string Name
+            {
+                get
+                {
+                    return _jobDefinition.Name;
+                }
+            }
+            public string Description
+            {
+                get
+                {
+                    return _jobDefinition.Description;
+                }
+            }
+
+            public override string ToString()
+            {
+                return $"{Name} ({base.ToString()})";
             }
         }
     }

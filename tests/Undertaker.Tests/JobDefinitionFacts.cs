@@ -95,6 +95,30 @@ namespace Undertaker
                 Discriminator = discriminator;
             }
 
+            public IJobStorage Storage
+            {
+                get
+                {
+                    return null;
+                }
+            }
+
+            public string Name
+            {
+                get
+                {
+                    return "JobMock";
+                }
+            }
+
+            public string Description
+            {
+                get
+                {
+                    return "A mock job.";
+                }
+            }
+
             [UsedImplicitly]
             public string Discriminator { get; }
         }
