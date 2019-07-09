@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Undertaker
 {
     public class InMemoryJobStorage : IJobStorage
     {
         private readonly object _syncLock = new object();
+        private bool _isDisposed = false;
 
         private readonly List<InMemoryJob> _nextJobs;
         private readonly List<InMemoryJob> _processingJobs;
@@ -27,20 +29,22 @@ namespace Undertaker
             _timeSpanBeforeReclaimingJob = timeSpanBeforeReclaimingJob ?? TimeSpan.FromMinutes(5);
         }
 
-        public IJob CreateJob(JobDefinition jobDefinition)
+        public Task<IJob> CreateJobAsync(JobDefinition jobDefinition)
         {
-            foreach (var runAfterJob in jobDefinition.RunAfterJobs)
-            {
-                if (!(runAfterJob is InMemoryJob imJob) || imJob.Storage != this)
-                {
-                    throw new KeyNotFoundException($"Job {runAfterJob} was created using a different job scheduler or storage.");
-                }
-            }
-
-            var job = CreateJobModel(jobDefinition);
-
             lock (_syncLock)
             {
+                if (_isDisposed) throw new ObjectDisposedException(nameof(InMemoryJobStorage));
+
+                foreach (var runAfterJob in jobDefinition.RunAfterJobs)
+                {
+                    if (!(runAfterJob is InMemoryJob imJob) || imJob.Storage != this)
+                    {
+                        throw new KeyNotFoundException($"Job {runAfterJob} was created using a different job scheduler or storage.");
+                    }
+                }
+
+                var job = CreateJobModel(jobDefinition);
+
                 if (jobDefinition.RunAfterJobs.Count > 0)
                 {
                     foreach (var runAfterJob in jobDefinition.RunAfterJobs.Cast<InMemoryJob>())
@@ -50,32 +54,35 @@ namespace Undertaker
                 }
 
                 UpdateJobStatusImpl(job, JobStatus.Scheduled);
+
+                return Task.FromResult<IJob>(job);
             }
-
-            return job;
         }
-
         private InMemoryJob CreateJobModel(JobDefinition jobDefinition)
         {
             return new InMemoryJob(this, jobDefinition);
         }
 
-        public IJob PollForNextJob()
+        public Task<IJob> PollForNextJobAsync()
         {
             lock (_syncLock)
             {
+                if (_isDisposed) throw new ObjectDisposedException(nameof(InMemoryJobStorage));
+
                 var job = _nextJobs.FirstOrDefault();
                 if (job == null || job.RunAtTime > DateTime.UtcNow) return null;
 
                 _nextJobs.RemoveAt(0);
                 job.RunAtTime = DateTime.UtcNow.Add(_timeSpanBeforeReclaimingJob);
                 InsertJob(_processingJobs, job);
-                return job;
+                return Task.FromResult<IJob>(job);
             }
         }
 
-        public void UpdateJobStatus(IJob job, JobStatus status)
+        public Task UpdateJobStatusAsync(IJob job, JobStatus status)
         {
+            if (_isDisposed) throw new ObjectDisposedException(nameof(InMemoryJobStorage));
+
             if (!(job is InMemoryJob imJob) || imJob.Storage != this)
             {
                 throw new KeyNotFoundException($"Job {job} was created using a different job scheduler or storage.");
@@ -85,8 +92,9 @@ namespace Undertaker
             {
                 UpdateJobStatusImpl(imJob, status);
             }
-        }
 
+            return Task.CompletedTask;
+        }
         /// <summary>
         /// Assumptions:
         /// - <see cref="_syncLock"/> is already locked when entering this method.
@@ -180,6 +188,21 @@ namespace Undertaker
             }
 
             jobQueue.Insert(lowerBound, job);
+        }
+
+        public void Dispose()
+        {
+            lock (_syncLock)
+            {
+                if (_isDisposed) return;
+                _isDisposed = true;
+
+                _nextJobs.Clear();
+                _processingJobs.Clear();
+                _blockedJobs.Clear();
+                _completedJobs.Clear();
+                _erroredJobs.Clear();
+            }
         }
 
         public class InMemoryJob : IJob

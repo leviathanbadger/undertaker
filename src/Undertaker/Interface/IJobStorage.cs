@@ -1,13 +1,15 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace Undertaker
 {
-    public interface IJobStorage
+    public interface IJobStorage : IDisposable
     {
         [CanBeNull]
-        IJob PollForNextJob();
+        Task<IJob> PollForNextJobAsync();
 
-        IJob CreateJob(JobDefinition jobDefinition);
-        void UpdateJobStatus(IJob job, JobStatus status);
+        Task<IJob> CreateJobAsync(JobDefinition jobDefinition);
+        Task UpdateJobStatusAsync(IJob job, JobStatus status);
     }
 }

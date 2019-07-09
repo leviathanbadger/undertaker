@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using System;
+using System.Threading.Tasks;
 using Undertaker.TestsCommon.Containers;
 using Xunit;
 
@@ -10,7 +11,7 @@ namespace Undertaker
         private readonly UndertakerContainer _container = new UndertakerContainer();
 
         [Fact]
-        public void CreateJob_ShouldWork()
+        public async Task CreateJob_ShouldWork()
         {
             //Arrange
             var jobName = "BillyBobJoe";
@@ -24,7 +25,7 @@ namespace Undertaker
             var jobStorage = _container.Get<InMemoryJobStorage>();
 
             //Act
-            var job = jobStorage.CreateJob(jobDefinition);
+            var job = await jobStorage.CreateJobAsync(jobDefinition);
 
             //Assert
             job.Should().NotBeNull();
