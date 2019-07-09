@@ -31,6 +31,8 @@ namespace Undertaker
 
         public Task<IJob> CreateJobAsync(JobDefinition jobDefinition)
         {
+            if (jobDefinition == null) throw new ArgumentNullException(nameof(jobDefinition));
+
             lock (_syncLock)
             {
                 if (_isDisposed) throw new ObjectDisposedException(nameof(InMemoryJobStorage));

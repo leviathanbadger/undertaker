@@ -11,7 +11,23 @@ namespace Undertaker
         private readonly UndertakerContainer _container = new UndertakerContainer();
 
         [Fact]
-        public async Task CreateJob_ShouldWork()
+        public async Task CreateJobAsync_WhenJobDefinitionIsNull_ShouldFailFast()
+        {
+            //Arrange
+            JobDefinition jobDefinition = (dynamic)null;
+
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            //Act
+            Func<Task> act = () => jobStorage.CreateJobAsync(jobDefinition);
+
+            //Assert
+            var exception = await act.Should().ThrowAsync<ArgumentNullException>();
+            exception.Which.ParamName.Should().Be(nameof(jobDefinition));
+        }
+
+        [Fact]
+        public async Task CreateJobAsync_ShouldWork()
         {
             //Arrange
             var jobName = "BillyBobJoe";
