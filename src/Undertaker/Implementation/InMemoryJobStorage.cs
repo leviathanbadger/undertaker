@@ -8,7 +8,7 @@ namespace Undertaker
     public class InMemoryJobStorage : IJobStorage
     {
         private readonly object _syncLock = new object();
-        private bool _isDisposed = false;
+        private bool _isDisposed;
 
         private readonly List<InMemoryJob> _nextJobs;
         private readonly List<InMemoryJob> _processingJobs;

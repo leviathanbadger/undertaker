@@ -1,5 +1,4 @@
 using FluentAssertions;
-using JetBrains.Annotations;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -86,48 +85,6 @@ namespace Undertaker
 
             //Assert
             result.Parameters.ElementAt(1).FullyQualifiedTypeName.Should().Be("type2");
-        }
-
-        private class JobMock : IJob
-        {
-            public JobMock(string discriminator)
-            {
-                Discriminator = discriminator;
-            }
-
-            public IJobStorage Storage
-            {
-                get
-                {
-                    return null;
-                }
-            }
-
-            public string Name
-            {
-                get
-                {
-                    return "JobMock";
-                }
-            }
-            public string Description
-            {
-                get
-                {
-                    return "A mock job.";
-                }
-            }
-
-            public JobStatus Status
-            {
-                get
-                {
-                    return JobStatus.Scheduled;
-                }
-            }
-
-            [UsedImplicitly]
-            public string Discriminator { get; }
         }
     }
 }

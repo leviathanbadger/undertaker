@@ -6,7 +6,7 @@ namespace Undertaker
 {
     public interface IJobStorage : IDisposable
     {
-        [CanBeNull]
+        [ItemCanBeNull]
         Task<IJob> PollForNextJobAsync();
 
         Task<IJob> CreateJobAsync(JobDefinition jobDefinition);
