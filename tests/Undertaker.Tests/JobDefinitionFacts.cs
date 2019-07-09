@@ -110,12 +110,19 @@ namespace Undertaker
                     return "JobMock";
                 }
             }
-
             public string Description
             {
                 get
                 {
                     return "A mock job.";
+                }
+            }
+
+            public JobStatus Status
+            {
+                get
+                {
+                    return JobStatus.Scheduled;
                 }
             }
 

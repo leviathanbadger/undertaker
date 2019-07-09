@@ -6,5 +6,7 @@
 
         string Name { get; }
         string Description { get; }
+
+        JobStatus Status { get; }
     }
 }
