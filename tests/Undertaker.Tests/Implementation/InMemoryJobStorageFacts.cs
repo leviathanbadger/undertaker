@@ -353,5 +353,40 @@ namespace Undertaker
             firstJob.Status.Should().Be(JobStatus.Completed);
             secondJob.Status.Should().Be(JobStatus.Processing);
         }
+
+        [Fact]
+        public async Task PollForNextJobAsync_AfterReclaimJobTimeElapsed_ShouldReturnSameJobAgain()
+        {
+            //Arrange
+            var jobStorage = new InMemoryJobStorage(TimeSpan.FromMilliseconds(200));
+
+            var parameters = Array.Empty<ParameterDefinition>();
+            var runAt = DateTime.UtcNow.AddMinutes(-5);
+            var runAfter = Array.Empty<IJob>();
+
+            var jobDefinition = new JobDefinition("", "", "", "", false, parameters, runAt, runAfter);
+            var job = await jobStorage.CreateJobAsync(jobDefinition);
+
+            //Act
+            var nextJob = await jobStorage.PollForNextJobAsync();
+
+            //Assert
+            nextJob.Should().Be(job);
+            job.Status.Should().Be(JobStatus.Processing);
+
+            //Act
+            nextJob = await jobStorage.PollForNextJobAsync();
+
+            //Assert
+            nextJob.Should().BeNull();
+
+            //Act
+            await Task.Delay(300);
+            nextJob = await jobStorage.PollForNextJobAsync();
+
+            //Assert
+            nextJob.Should().Be(nextJob);
+            job.Status.Should().Be(JobStatus.Processing);
+        }
     }
 }

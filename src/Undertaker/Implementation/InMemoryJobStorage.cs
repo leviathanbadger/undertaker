@@ -71,13 +71,25 @@ namespace Undertaker
             {
                 if (_isDisposed) throw new ObjectDisposedException(nameof(InMemoryJobStorage));
 
+                ReclaimLongProcessingJobs();
+
                 var job = _nextJobs.FirstOrDefault();
                 if (job == null || job.RunAtTime > DateTime.UtcNow) return Task.FromResult<IJob>(null);
 
                 _nextJobs.RemoveAt(0);
-                job.RunAtTime = DateTime.UtcNow.Add(_timeSpanBeforeReclaimingJob);
                 UpdateJobStatusImpl(job, JobStatus.Processing);
                 return Task.FromResult<IJob>(job);
+            }
+        }
+
+        private void ReclaimLongProcessingJobs()
+        {
+            while (true)
+            {
+                var nextProcessingJob = _processingJobs.FirstOrDefault();
+                if (nextProcessingJob == null || nextProcessingJob.ReclaimAtTime > DateTime.UtcNow) break;
+
+                UpdateJobStatusImpl(nextProcessingJob, JobStatus.Scheduled);
             }
         }
 
@@ -143,7 +155,8 @@ namespace Undertaker
                 break;
 
             case JobStatus.Processing:
-                InsertJob(_processingJobs, job);
+                job.ReclaimAtTime = DateTime.UtcNow.Add(_timeSpanBeforeReclaimingJob);
+                InsertJob(_processingJobs, job, j => j.ReclaimAtTime);
                 break;
 
             case JobStatus.Completed:
@@ -177,9 +190,11 @@ namespace Undertaker
         /// </summary>
         /// <param name="jobQueue">The queue to add the job to.</param>
         /// <param name="job">The job to add to the queue</param>
-        private void InsertJob(List<InMemoryJob> jobQueue, InMemoryJob job)
+        private void InsertJob(List<InMemoryJob> jobQueue, InMemoryJob job, Func<InMemoryJob, DateTime> keySelector = null)
         {
-            var runAtTime = job.RunAtTime;
+            keySelector = keySelector ?? (j => j.RunAtTime);
+
+            var runAtTime = keySelector(job);
 
             int lowerBound = 0;
             int upperBound = jobQueue.Count;
@@ -187,7 +202,7 @@ namespace Undertaker
             while (lowerBound != upperBound)
             {
                 var mid = lowerBound + (upperBound - lowerBound) / 2;
-                if (runAtTime > jobQueue[mid].RunAtTime) upperBound = mid;
+                if (runAtTime > keySelector(jobQueue[mid])) upperBound = mid;
                 else lowerBound = mid;
             }
 
@@ -216,7 +231,7 @@ namespace Undertaker
 
             private readonly List<InMemoryJob> _blockingJobs;
             private readonly List<InMemoryJob> _blockedByJobs;
-            private DateTime _runAtTime;
+            private DateTime _runAtTime, _reclaimAtTime;
             private JobStatus _status;
 
             public InMemoryJob(InMemoryJobStorage storage, JobDefinition jobDefinition)
@@ -229,6 +244,7 @@ namespace Undertaker
                 _status = JobStatus.Creating;
 
                 _runAtTime = _jobDefinition.RunAtTime ?? DateTime.UtcNow;
+                _reclaimAtTime = _runAtTime;
             }
 
             public IJobStorage Storage
@@ -287,6 +303,17 @@ namespace Undertaker
                 set
                 {
                     _runAtTime = value;
+                }
+            }
+            public DateTime ReclaimAtTime
+            {
+                get
+                {
+                    return _reclaimAtTime;
+                }
+                set
+                {
+                    _reclaimAtTime = value;
                 }
             }
 
