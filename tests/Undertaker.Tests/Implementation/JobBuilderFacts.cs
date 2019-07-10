@@ -28,21 +28,21 @@ namespace Undertaker
         }
 
         [Fact]
-        public void WithName_WhenNameHasNotBeenSelected_ShouldSetJobName()
+        public async Task WithName_WhenNameHasNotBeenSelected_ShouldSetJobName()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             var name = "turkey";
 
             //Act
-            builder.WithName(name).Run<TestJob>(job => job.Run());
+            await builder.WithName(name).EnqueueAsync<TestJob>(job => job.Run());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.Name.Should().Be(name);
             jobDefinition.Description.Should().BeNull();
@@ -81,21 +81,21 @@ namespace Undertaker
         }
 
         [Fact]
-        public void WithDescription_WhenDescriptionHasNotBeenSelected_ShouldSetJobDescription()
+        public async Task WithDescription_WhenDescriptionHasNotBeenSelected_ShouldSetJobDescription()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             var desc = "turkey";
 
             //Act
-            builder.WithDescription(desc).Run<TestJob>(job => job.Run());
+            await builder.WithDescription(desc).EnqueueAsync<TestJob>(job => job.Run());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.Name.Should().Be(nameof(TestJob.Run));
             jobDefinition.Description.Should().Be(desc);
@@ -118,21 +118,21 @@ namespace Undertaker
         }
 
         [Fact]
-        public void AfterDateTime_WhenRunAtHasNotBeenSelected_ShouldSetRunAtTime()
+        public async Task AfterDateTime_WhenRunAtHasNotBeenSelected_ShouldSetRunAtTime()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = new JobBuilder(scheduler);
 
             var runAt = DateTime.UtcNow.AddHours(1);
 
             //Act
-            builder.After(runAt).Run<TestJob>(job => job.Run());
+            await builder.After(runAt).EnqueueAsync<TestJob>(job => job.Run());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.RunAtTime.Should().Be(runAt);
             jobDefinition.RunAfterJobs.Should().BeEmpty();
@@ -155,21 +155,21 @@ namespace Undertaker
         }
 
         [Fact]
-        public void AfterJob_ShouldAddJobAsPrerequisite()
+        public async Task AfterJob_ShouldAddJobAsPrerequisite()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             var afterJob = Substitute.For<IJob>();
 
             //Act
-            builder.After(afterJob).Run<TestJob>(job => job.Run());
+            await builder.After(afterJob).EnqueueAsync<TestJob>(job => job.Run());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.RunAtTime.Should().Be(null);
             jobDefinition.RunAfterJobs.Count.Should().Be(1);
@@ -177,12 +177,12 @@ namespace Undertaker
         }
 
         [Fact]
-        public void AfterJob_WhenInvokedMultipleTimes_ShouldAddMultipleJobsAsPrerequisites()
+        public async Task AfterJob_WhenInvokedMultipleTimes_ShouldAddMultipleJobsAsPrerequisites()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             var afterJobs = Enumerable.Range(0, 5)
@@ -194,29 +194,29 @@ namespace Undertaker
             {
                 builder = builder.After(afterJob);
             }
-            builder.Run<TestJob>(job => job.Run());
+            await builder.EnqueueAsync<TestJob>(job => job.Run());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.RunAtTime.Should().Be(null);
             jobDefinition.RunAfterJobs.Should().BeEquivalentTo(afterJobs);
         }
 
         [Fact]
-        public void Run_WithStaticExpression_ShouldWork()
+        public async Task EnqueueAsync_WithStaticExpression_ShouldWork()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             //Act
-            builder.Run(() => TestJob.RunStatic());
+            await builder.EnqueueAsync(() => TestJob.RunStatic());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.IsMethodStatic.Should().BeTrue();
             jobDefinition.MethodName.Should().Be(nameof(TestJob.RunStatic));
@@ -224,19 +224,19 @@ namespace Undertaker
         }
 
         [Fact]
-        public void Run_WithMemberExpression_ShouldWork()
+        public async Task EnqueueAsync_WithMemberExpression_ShouldWork()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             //Act
-            builder.Run<TestJob>(job => job.Run());
+            await builder.EnqueueAsync<TestJob>(job => job.Run());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.IsMethodStatic.Should().BeFalse();
             jobDefinition.MethodName.Should().Be(nameof(TestJob.Run));
@@ -244,19 +244,19 @@ namespace Undertaker
         }
 
         [Fact]
-        public void Run_WithStaticAsyncExpression_ShouldWork()
+        public async Task EnqueueAsync_WithStaticAsyncExpression_ShouldWork()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             //Act
-            builder.Run(() => TestJob.RunStaticAsync());
+            await builder.EnqueueAsync(() => TestJob.RunStaticAsync());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.IsMethodStatic.Should().BeTrue();
             jobDefinition.MethodName.Should().Be(nameof(TestJob.RunStaticAsync));
@@ -264,19 +264,19 @@ namespace Undertaker
         }
 
         [Fact]
-        public void Run_WithMemberAsyncExpression_ShouldWork()
+        public async Task EnqueueAsync_WithMemberAsyncExpression_ShouldWork()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             JobDefinition jobDefinition = null;
-            scheduler.ScheduleJob(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
+            await scheduler.ScheduleJobAsync(Arg.Do<JobDefinition>(jobDef => jobDefinition = jobDef));
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             //Act
-            builder.Run<TestJob>(job => job.RunAsync());
+            await builder.EnqueueAsync<TestJob>(job => job.RunAsync());
 
             //Assert
-            scheduler.ScheduleJob(Arg.Any<JobDefinition>()).Received(1);
+            await scheduler.Received(1).ScheduleJobAsync(Arg.Any<JobDefinition>());
             jobDefinition.Should().NotBeNull();
             jobDefinition.IsMethodStatic.Should().BeFalse();
             jobDefinition.MethodName.Should().Be(nameof(TestJob.RunAsync));
@@ -284,23 +284,23 @@ namespace Undertaker
         }
 
         [Fact]
-        public void Run_WithNonMethodCallExpression_ShouldFailFast()
+        public async Task EnqueueAsync_WithNonMethodCallExpression_ShouldFailFast()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             //Act
-            Action act = () => builder.Run<TestJob>(job => Task.CompletedTask);
+            Func<Task> act = () => builder.EnqueueAsync<TestJob>(job => Task.CompletedTask);
 
             //Assert
-            act.Should()
-               .Throw<ArgumentException>()
-               .WithMessage("*must be a method call expression*");
+            await act.Should()
+                     .ThrowAsync<ArgumentException>()
+                     .WithMessage("*must be a method call expression*");
         }
 
         [Fact]
-        public void Run_WhenMemberMethodObjectIsNotParameter_ShouldFailFast()
+        public async Task EnqueueAsync_WhenMemberMethodObjectIsNotParameter_ShouldFailFast()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
@@ -308,32 +308,32 @@ namespace Undertaker
             var otherJob = new TestJob();
 
             //Act
-            Action act = () => builder.Run<TestJob>(job => otherJob.Run());
+            Func<Task> act = () => builder.EnqueueAsync<TestJob>(job => otherJob.Run());
 
             //Assert
-            act.Should()
-               .Throw<ArgumentException>()
-               .WithMessage("An activation class was selected, but was not used as the left-hand side of the method call expression.");
+            await act.Should()
+                     .ThrowAsync<ArgumentException>()
+                     .WithMessage("An activation class was selected, but was not used as the left-hand side of the method call expression.");
         }
 
         [Fact]
-        public void Run_WhenMemberMethodObjectIsNotAnObject_ShouldFailFast()
+        public async Task EnqueueAsync_WhenMemberMethodObjectIsNotAnObject_ShouldFailFast()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
             var builder = (IJobBuilder)new JobBuilder(scheduler);
 
             //Act
-            Action act = () => builder.Run<TestJob>(job => job.Self.Run());
+            Func<Task> act = () => builder.EnqueueAsync<TestJob>(job => job.Self.Run());
 
             //Assert
-            act.Should()
-               .Throw<ArgumentException>()
-               .WithMessage("An activation class was selected, but was not used as the left-hand side of the method call expression.");
+            await act.Should()
+                     .ThrowAsync<ArgumentException>()
+                     .WithMessage("An activation class was selected, but was not used as the left-hand side of the method call expression.");
         }
 
         [Fact]
-        public void Run_WithoutParameter_WhenExpressionHasMethodObject_ShouldFailFast()
+        public async Task EnqueueAsync_WithoutParameter_WhenExpressionHasMethodObject_ShouldFailFast()
         {
             //Arrange
             var scheduler = Substitute.For<IJobScheduler>();
@@ -341,12 +341,12 @@ namespace Undertaker
             var otherJob = new TestJob();
 
             //Act
-            Action act = () => builder.Run(() => otherJob.Run());
+            Func<Task> act = () => builder.EnqueueAsync(() => otherJob.Run());
 
             //Assert
-            act.Should()
-               .Throw<ArgumentException>()
-               .WithMessage("No activation class selected, so the method call must be static.*");
+            await act.Should()
+                     .ThrowAsync<ArgumentException>()
+                     .WithMessage("No activation class selected, so the method call must be static.*");
         }
 
         [UsedImplicitly]

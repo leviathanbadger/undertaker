@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace Undertaker
 {
@@ -7,6 +8,6 @@ namespace Undertaker
         [MustUseReturnValue]
         IJobBuilder BuildJob();
 
-        IJob ScheduleJob(JobDefinition jobDefinition);
+        Task<IJob> ScheduleJobAsync(JobDefinition jobDefinition);
     }
 }

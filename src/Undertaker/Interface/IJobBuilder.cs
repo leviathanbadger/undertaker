@@ -17,9 +17,9 @@ namespace Undertaker
         [MustUseReturnValue]
         IJobBuilder After(IJob job);
 
-        IJob Run<T>(Expression<Action<T>> job);
-        IJob Run<T>(Expression<Func<T, Task>> job);
-        IJob Run(Expression<Action> job);
-        IJob Run(Expression<Func<Task>> job);
+        Task<IJob> EnqueueAsync<T>(Expression<Action<T>> job);
+        Task<IJob> EnqueueAsync<T>(Expression<Func<T, Task>> job);
+        Task<IJob> EnqueueAsync(Expression<Action> job);
+        Task<IJob> EnqueueAsync(Expression<Func<Task>> job);
     }
 }

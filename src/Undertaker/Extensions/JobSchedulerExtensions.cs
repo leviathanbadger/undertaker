@@ -18,21 +18,21 @@ namespace Undertaker.Extensions
             return scheduler.BuildJob().After(job);
         }
 
-        public static IJob Run<T>(this IJobScheduler scheduler, Expression<Action<T>> job)
+        public static Task<IJob> EnqueueAsync<T>(this IJobScheduler scheduler, Expression<Action<T>> job)
         {
-            return scheduler.BuildJob().Run(job);
+            return scheduler.BuildJob().EnqueueAsync(job);
         }
-        public static IJob Run<T>(this IJobScheduler scheduler, Expression<Func<T, Task>> job)
+        public static Task<IJob> EnqueueAsync<T>(this IJobScheduler scheduler, Expression<Func<T, Task>> job)
         {
-            return scheduler.BuildJob().Run(job);
+            return scheduler.BuildJob().EnqueueAsync(job);
         }
-        public static IJob Run(this IJobScheduler scheduler, Expression<Action> job)
+        public static Task<IJob> EnqueueAsync(this IJobScheduler scheduler, Expression<Action> job)
         {
-            return scheduler.BuildJob().Run(job);
+            return scheduler.BuildJob().EnqueueAsync(job);
         }
-        public static IJob Run(this IJobScheduler scheduler, Expression<Func<Task>> job)
+        public static Task<IJob> EnqueueAsync(this IJobScheduler scheduler, Expression<Func<Task>> job)
         {
-            return scheduler.BuildJob().Run(job);
+            return scheduler.BuildJob().EnqueueAsync(job);
         }
     }
 }

@@ -51,24 +51,24 @@ namespace Undertaker
             return this;
         }
 
-        public IJob Run<T>(Expression<Action<T>> job)
+        public Task<IJob> EnqueueAsync<T>(Expression<Action<T>> job)
         {
-            return Run((LambdaExpression)job);
+            return EnqueueAsync((LambdaExpression)job);
         }
-        public IJob Run<T>(Expression<Func<T, Task>> job)
+        public Task<IJob> EnqueueAsync<T>(Expression<Func<T, Task>> job)
         {
-            return Run((LambdaExpression)job);
+            return EnqueueAsync((LambdaExpression)job);
         }
-        public IJob Run(Expression<Action> job)
+        public Task<IJob> EnqueueAsync(Expression<Action> job)
         {
-            return Run((LambdaExpression)job);
+            return EnqueueAsync((LambdaExpression)job);
         }
-        public IJob Run(Expression<Func<Task>> job)
+        public Task<IJob> EnqueueAsync(Expression<Func<Task>> job)
         {
-            return Run((LambdaExpression)job);
+            return EnqueueAsync((LambdaExpression)job);
         }
 
-        private IJob Run(LambdaExpression job)
+        private async Task<IJob> EnqueueAsync(LambdaExpression job)
         {
             ValidateExpression(job, out var fullyQualifiedTypeName, out var methodName, out var isStatic, out var parameters);
 
@@ -82,7 +82,7 @@ namespace Undertaker
                 runAt: _runAt,
                 runAfter: _runAfter.ToArray());
 
-            return _jobScheduler.ScheduleJob(jobDefinition);
+            return await _jobScheduler.ScheduleJobAsync(jobDefinition);
         }
 
         private void ValidateExpression(LambdaExpression job, out string fullyQualifiedTypeName, out string methodName, out bool isStatic, out ParameterDefinition[] parameters)
