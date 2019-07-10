@@ -180,5 +180,178 @@ namespace Undertaker
             //Assert
             nextJob.Should().BeNull();
         }
+
+        [Fact]
+        public async Task PollForNextJobAsync_WhenScheduledJobIsBlockedByJobInFuture_ShouldReturnNull()
+        {
+            //Arrange
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            var jobName = "FirstJob";
+            var parameters = Array.Empty<ParameterDefinition>();
+            var runAt = DateTime.UtcNow.AddMinutes(5);
+            var runAfter = Array.Empty<IJob>();
+
+            var jobDefinition = new JobDefinition(jobName, "", "", "", false, parameters, runAt, runAfter);
+            var firstJob = await jobStorage.CreateJobAsync(jobDefinition);
+
+            jobName = "SecondJob";
+            runAt = DateTime.UtcNow.AddMinutes(-5);
+            runAfter = new[] { firstJob };
+
+            jobDefinition = new JobDefinition(jobName, "", "", "", false, parameters, runAt, runAfter);
+            var secondJob = await jobStorage.CreateJobAsync(jobDefinition);
+
+            //Act
+            var nextJob = await jobStorage.PollForNextJobAsync();
+
+            //Assert
+            nextJob.Should().BeNull();
+            secondJob.Should().NotBe(firstJob);
+        }
+
+        [Fact]
+        public async Task UpdateJobStatusAsync_WhenStorageIsDisposed_ShouldFailFast()
+        {
+            //Arrange
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            var parameters = Array.Empty<ParameterDefinition>();
+            var runAt = DateTime.UtcNow.AddMinutes(5);
+            var runAfter = Array.Empty<IJob>();
+
+            var jobDefinition = new JobDefinition("", "", "", "", false, parameters, runAt, runAfter);
+            var job = await jobStorage.CreateJobAsync(jobDefinition);
+
+            jobStorage.Dispose();
+
+            //Act
+            Func<Task> act = () => jobStorage.UpdateJobStatusAsync(job, JobStatus.Completed);
+
+            //Assert
+            var exception = await act.Should().ThrowAsync<ObjectDisposedException>();
+            exception.Which.ObjectName.Should().Be(nameof(InMemoryJobStorage));
+        }
+
+        [Fact]
+        public async Task UpdateJobStatusAsync_WhenJobIsNull_ShouldFailFast()
+        {
+            //Arrange
+            IJob job = (dynamic)null;
+
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            //Act
+            Func<Task> act = () => jobStorage.UpdateJobStatusAsync(job, JobStatus.Completed);
+
+            //Assert
+            var exception = await act.Should().ThrowAsync<ArgumentNullException>();
+            exception.Which.ParamName.Should().Be(nameof(job));
+        }
+
+        [Fact]
+        public async Task UpdateJobStatusAsync_WhenJobIsNotFromStorage_ShouldFailFast()
+        {
+            //Arrange
+            IJob job = new JobMock("test");
+
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            //Act
+            Func<Task> act = () => jobStorage.UpdateJobStatusAsync(job, JobStatus.Completed);
+
+            //Assert
+            var exception = await act.Should().ThrowAsync<KeyNotFoundException>();
+            exception.WithMessage("*Job* created using a different job scheduler or storage*");
+        }
+
+        [Fact]
+        public async Task UpdateJobStatusAsync_WhenSettingJobStatusToCreating_ShouldFailFast()
+        {
+            //Arrange
+            var parameters = Array.Empty<ParameterDefinition>();
+            var runAt = DateTime.UtcNow.AddMinutes(-5);
+            var runAfter = Array.Empty<IJob>();
+
+            var jobDefinition = new JobDefinition("", "", "", "", false, parameters, runAt, runAfter);
+
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            var job = await jobStorage.CreateJobAsync(jobDefinition);
+
+            //Act
+            Func<Task> act = () => jobStorage.UpdateJobStatusAsync(job, JobStatus.Creating);
+
+            //Assert
+            var exception = await act.Should().ThrowAsync<NotSupportedException>();
+            exception.WithMessage("*Can't set the job status back to Creating*");
+        }
+
+        [Theory]
+        [InlineData(JobStatus.Processing)]
+        [InlineData(JobStatus.Completed)]
+        [InlineData(JobStatus.Error)]
+        public async Task PollForNextJobAsync_WhenJobIsManuallySet_ShouldReturnNull(JobStatus setStatusTo)
+        {
+            //Arrange
+            var parameters = Array.Empty<ParameterDefinition>();
+            var runAt = DateTime.UtcNow.AddMinutes(-5);
+            var runAfter = Array.Empty<IJob>();
+
+            var jobDefinition = new JobDefinition("", "", "", "", false, parameters, runAt, runAfter);
+
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            var job = await jobStorage.CreateJobAsync(jobDefinition);
+
+            //Act
+            await jobStorage.UpdateJobStatusAsync(job, setStatusTo);
+            var nextJob = await jobStorage.PollForNextJobAsync();
+
+            //Assert
+            nextJob.Should().BeNull();
+            job.Status.Should().Be(setStatusTo);
+
+            //Act
+            await jobStorage.UpdateJobStatusAsync(job, JobStatus.Scheduled);
+            nextJob = await jobStorage.PollForNextJobAsync();
+
+            //Assert
+            nextJob.Should().Be(job);
+            job.Status.Should().Be(JobStatus.Processing);
+        }
+
+        [Fact]
+        public async Task PollForNextJobAsync_AfterCompletingBlockingJob_ShouldReturnNewlyUnblockedJob()
+        {
+            //Arrange
+            var jobStorage = _container.Get<InMemoryJobStorage>();
+
+            var parameters = Array.Empty<ParameterDefinition>();
+            var runAt = DateTime.UtcNow.AddMinutes(5);
+            var runAfter = Array.Empty<IJob>();
+
+            var jobDefinition = new JobDefinition("", "", "", "", false, parameters, runAt, runAfter);
+            var firstJob = await jobStorage.CreateJobAsync(jobDefinition);
+
+            runAt = DateTime.UtcNow.AddMinutes(-5);
+            runAfter = new[] { firstJob };
+
+            jobDefinition = new JobDefinition("", "", "", "", false, parameters, runAt, runAfter);
+            var secondJob = await jobStorage.CreateJobAsync(jobDefinition);
+
+            //Assert
+            var nextJob = await jobStorage.PollForNextJobAsync();
+            nextJob.Should().BeNull();
+
+            //Act
+            await jobStorage.UpdateJobStatusAsync(firstJob, JobStatus.Completed);
+            nextJob = await jobStorage.PollForNextJobAsync();
+
+            //Assert
+            nextJob.Should().Be(secondJob);
+            firstJob.Status.Should().Be(JobStatus.Completed);
+            secondJob.Status.Should().Be(JobStatus.Processing);
+        }
     }
 }

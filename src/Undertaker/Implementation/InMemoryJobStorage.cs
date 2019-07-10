@@ -83,6 +83,8 @@ namespace Undertaker
 
         public Task UpdateJobStatusAsync(IJob job, JobStatus status)
         {
+            if (job == null) throw new ArgumentNullException(nameof(job));
+
             if (_isDisposed) throw new ObjectDisposedException(nameof(InMemoryJobStorage));
 
             if (!(job is InMemoryJob imJob) || imJob.Storage != this)
