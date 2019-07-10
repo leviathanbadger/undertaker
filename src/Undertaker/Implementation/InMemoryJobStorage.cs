@@ -72,11 +72,11 @@ namespace Undertaker
                 if (_isDisposed) throw new ObjectDisposedException(nameof(InMemoryJobStorage));
 
                 var job = _nextJobs.FirstOrDefault();
-                if (job == null || job.RunAtTime > DateTime.UtcNow) return null;
+                if (job == null || job.RunAtTime > DateTime.UtcNow) return Task.FromResult<IJob>(null);
 
                 _nextJobs.RemoveAt(0);
                 job.RunAtTime = DateTime.UtcNow.Add(_timeSpanBeforeReclaimingJob);
-                InsertJob(_processingJobs, job);
+                UpdateJobStatusImpl(job, JobStatus.Processing);
                 return Task.FromResult<IJob>(job);
             }
         }
