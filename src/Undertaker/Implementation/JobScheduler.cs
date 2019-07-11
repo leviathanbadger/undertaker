@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Threading.Tasks;
 
 namespace Undertaker
 {
@@ -13,12 +13,12 @@ namespace Undertaker
 
         public IJobBuilder BuildJob()
         {
-            throw new NotImplementedException();
+            return new JobBuilder(this);
         }
 
-        public IJob ScheduleJob(JobDefinition jobDefinition)
+        public async Task<IJob> ScheduleJobAsync(JobDefinition jobDefinition)
         {
-            throw new NotImplementedException();
+            return await _storage.CreateJobAsync(jobDefinition);
         }
     }
 }
