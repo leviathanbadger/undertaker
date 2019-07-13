@@ -1,7 +1,7 @@
 ﻿using AutoFixture;
 using Lamar;
 
-namespace Undertaker.TestsCommon.Registries
+namespace Undertaker.TestsCommon.Lamar.Registries
 {
     public class AutoFixtureRegistry : ServiceRegistry
     {

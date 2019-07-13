@@ -2,7 +2,7 @@
 using AutoFixture.Dsl;
 using Lamar;
 using System;
-using Undertaker.TestsCommon.Registries;
+using Undertaker.TestsCommon.Lamar.Registries;
 
 namespace Undertaker.TestsCommon.Containers
 {
@@ -14,6 +14,7 @@ namespace Undertaker.TestsCommon.Containers
         {
             _container = new Container(services =>
             {
+                services.IncludeRegistry<NSubstituteRegistry>();
                 services.IncludeRegistry<AutoFixtureRegistry>();
 
                 afterRegisterFn?.Invoke(services);
